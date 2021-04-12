@@ -1,0 +1,110 @@
+ANSWER 1 - PARSER
+package main
+
+import (
+	"encoding/json"
+	"log"	
+)
+
+func parse(v string) (*node, error) {
+	var root *node
+
+	strArray := []rune(v)
+	var i int
+	for i = range strArray {
+		str := string(strArray[i])
+		if str == "[" || str == "," {
+			continue
+		} else {
+			if i == len(str){
+				root = &node{Name: str, Children: []*node{}} 
+			}			
+		}
+		if str == "]" || str == "," {
+			continue
+		} else {
+			root = &node{Name: str, Children: []*node{}}
+			root.Children = append(root.Children, root)
+		}
+	}
+	
+	return root, nil
+}
+
+type node struct {
+	Name     string  `json:"name"`
+	Children []*node `json:"children,omitempty"`
+}
+
+var examples = []string{
+	"[a,b,c]",
+	"[a[aa[aaa],ab,ac],b,c[ca,cb,cc[cca]]]",
+}
+
+func main() {
+	for i, example := range examples {
+		result, err := parse(example)
+		if err != nil {
+			panic(err)
+		}
+		j, err := json.MarshalIndent(result, " ", " ")
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("Example %d: %s - %s", i, example, string(j))
+	}
+}
+
+
+
+ANSWER 2: CONCURRENCY
+
+package main
+
+import (
+	"log"
+	"time"
+)
+
+func main() {
+	const MAX = 5
+	var data int	
+	block := make(chan int, MAX)
+	for v := 0; v < 10; v++ {
+		block <- v
+		go func(v int) {
+			doublev := callDouble(v)
+			log.Printf("Thread %d returned: %d", v, doublev)
+			data = <-block						
+		}(v)
+		if data == MAX {
+			break
+		}		
+	}
+
+	time.Sleep(time.Second * 10)
+}
+
+func callDouble(v int) int {	
+	return double(v)
+}
+
+func double(v int) int {
+	time.Sleep(time.Second)
+	return v * 2
+}
+
+ANSWER 3 - FIND THE RIGHT PAKCAGE
+
+1. Exposing a websocket server to a browser for server push communication
+    did not get opportunity to expose websocket but we can do it using number of packages like stdlib, gorilla
+
+ 2. Parsing an xml file (DOM or SAX, when do you choose which?)
+    If the XML file is small then DOM can be used because it loads the whole xml together in memory while for huge xml files, Sax Parser would be suitable as SAX parser will parse file line by line
+
+ 3. An embedded Key Value store which would typically have ~100mb of data and be 99% reads
+    We have not used DB in our application because we use file system but I would surely use Badger for the above scenario.
+
+ 4. A system to auto-discover other instances of a service on the same network
+    Sorry skipping the question due to lack of knowledge in this area but would surely explore the scope.
+    
